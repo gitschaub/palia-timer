@@ -1,7 +1,7 @@
 {
   "name": "palia-timer",
   "version": "0.1.0",
-  "private": true,
+  "private": false,
   "type": "module",
   "homepage": "https://gitschaub.github.io/palia-timer",
   "dependencies": {
@@ -20,7 +20,7 @@
   },
   "scripts": {
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
+    "deploy": "gh-pages -d dist",
     "start": "BROWSER=none WDS_SOCKET_PORT=0 vite --port 3000",
     "build": "vite build",
     "preview": "vite preview",
