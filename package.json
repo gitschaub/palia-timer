@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "homepage": "https://gitschaub.github.io/palia-timer",
   "dependencies": {
     "@testing-library/jest-dom": "^5.16.5",
     "@testing-library/react": "^13.4.0",
@@ -17,6 +18,8 @@
     "postcss": "^8.4.31"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deply": "gh-pages -d build",
     "start": "BROWSER=none WDS_SOCKET_PORT=0 vite --port 3000",
     "build": "vite build",
     "preview": "vite preview",
