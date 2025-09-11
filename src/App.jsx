@@ -99,7 +99,7 @@ const PlatformStates = ({congruences, currentTimestamp, solutionInfo}) => {
       {congruences.map((c, index) => {
         const isUp = c.b > 0 && (Math.floor(currentTimestamp / c.b) % 2 === 0);
         const isUpAtStart = Math.floor(nextTimestamp / c.b) % 2 == 0;
-        const swap = isUpAtStart == c.downAtStart;
+        const swap = isUpAtStart && c.downAtStart;
         const effectiveStatus = swap ? !isUp : isUp;
         return (
           <div key={index} className="text-center">
