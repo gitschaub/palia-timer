@@ -63,7 +63,7 @@ const TimestampCalculator = ({ solution, modulus }) => {
 
  return (
    <div className="mt-8">
-     <h2 className="text-xl font-semibold mb-4 text-blue-500">Next Matching Timestamp</h2>
+     <h2 className="text-xl font-semibold mb-4 text-blue-500">Next Run</h2>
      <div className="bg-gray-100 p-4 rounded-lg shadow-inner space-y-2">
        <div>
          <h3 className="text-lg font-bold">UNIX Timestamp:</h3>
@@ -94,12 +94,17 @@ const PlatformStates = ({congruences, currentTimestamp, solutionInfo}) => {
       nextTimestamp(null);
     }
   }, [solutionInfo]);
+
+  if (solutionInfo == null) {
+    return null;
+  }
+
   return (
     <div className="flex justify-center space-x-4 mt-4">
       {congruences.map((c, index) => {
         const isUp = c.b > 0 && (Math.floor(currentTimestamp / c.b) % 2 === 0);
         const isUpAtStart = Math.floor(nextTimestamp / c.b) % 2 == 0;
-        const swap = isUpAtStart && c.downAtStart;
+        const swap = isUpAtStart && c.downAtStart || !isUpAtStart && !c.downAtStart;
         const effectiveStatus = swap ? !isUp : isUp;
         return (
           <div key={index} className="text-center">
@@ -120,17 +125,10 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
 
  useEffect(() => {
    const updateTime = () => {
-     const now = new Date();
-     const realHours = now.getHours();
-     const realMinutes = now.getMinutes();
-     const realSeconds = now.getSeconds();
-     const realMilliseconds = now.getMilliseconds();
+     const now = Math.floor(new Date().getTime() / 1000);
     
-     const totalRealSecondsSinceMidnight = realHours * 3600 + realMinutes * 60 + realSeconds + realMilliseconds / 1000;
-     const totalPaliaSecondsSinceMidnight = totalRealSecondsSinceMidnight * 24;
-    
-     const paliaHours = Math.floor(totalPaliaSecondsSinceMidnight / 3600) % 24;
-     const paliaMinutes = Math.floor((totalPaliaSecondsSinceMidnight % 3600) / 60);
+     const paliaHours = Math.floor(now % 3600 / 150);
+     const paliaMinutes = Math.floor(now / 2.5) % 60;
     
      const formattedHours = (paliaHours % 12 === 0 ? 12 : paliaHours % 12).toString().padStart(2, '0');
      const formattedMinutes = paliaMinutes.toString().padStart(2, '0');
@@ -146,7 +144,7 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
 
  return (
    <div className="text-center mb-6">
-     <h2 className="text-2xl font-bold text-gray-700">Palia Time</h2>
+     <h2 className="text-2xl font-bold text-gray-700">Current Palia Time</h2>
      <p className="text-4xl font-mono text-blue-600">
        {paliaTime}
      </p>
@@ -205,8 +203,8 @@ const PlatformStartCalculator = () => {
  );
 };
 
-// Tab for Palia Time and Timestamp Calculator
-const PaliaTimeTab = ({ solutionInfo, congruences, currentTimestamp }) => (
+// Tab for setting up runs based on Platform Planner
+const RunSetupTab = ({ solutionInfo, congruences, currentTimestamp }) => (
  <div>
    <PaliaClock congruences={congruences} currentTimestamp={currentTimestamp} />
    {solutionInfo && <PlatformStates congruences={congruences} currentTimestamp={currentTimestamp} solutionInfo={solutionInfo} />} 
@@ -379,7 +377,7 @@ const App = () => {
    <div className="bg-gray-50 flex items-center justify-center min-h-screen p-4 font-sans text-gray-800">
      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl w-full">
        <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
-         Palia Time and Platform Planner
+         Tower Run Planner
        </h1>
       
        {/* Tab Navigation */}
@@ -390,7 +388,7 @@ const App = () => {
              activeTab === 'palia' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
            }`}
          >
-           Palia Time
+           Run Setup
          </button>
          <button
            onClick={() => setActiveTab('solver')}
@@ -404,7 +402,7 @@ const App = () => {
 
        {/* Tab Content */}
        {activeTab === 'palia' ? (
-         <PaliaTimeTab solutionInfo={solutionInfo} congruences={congruences} currentTimestamp={currentTimestamp} />
+         <RunSetupTab solutionInfo={solutionInfo} congruences={congruences} currentTimestamp={currentTimestamp} />
        ) : (
          <PlatformPlannerTab
            congruences={congruences}
