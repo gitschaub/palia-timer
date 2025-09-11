@@ -30,31 +30,36 @@ const TimestampCalculator = ({ solution, modulus }) => {
  const [nextPaliaTime, setNextPaliaTime] = useState(null);
 
  useEffect(() => {
-   if (solution !== null && modulus !== null) {
-     const nowInSeconds = Math.floor(Date.now() / 1000);
-     const remainder = nowInSeconds % modulus;
-     let timeToAdd = (solution - remainder + modulus) % modulus;
-     const nextMatchingTime = nowInSeconds + timeToAdd;
+   const updateTimestamp = () => {
+     if (solution !== null && modulus !== null) {
+       const nowInSeconds = Math.floor(Date.now() / 1000);
+       const remainder = nowInSeconds % modulus;
+       let timeToAdd = (solution - remainder + modulus) % modulus;
+       const nextMatchingTime = nowInSeconds + timeToAdd;
 
-     setNextTimestamp(nextMatchingTime);
+       setNextTimestamp(nextMatchingTime);
 
-     // Convert UNIX timestamp to Palia time
-     const date = new Date(nextMatchingTime * 1000);
-     const realTimeElapsedMs = (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) * 1000;
-     const paliaTimeElapsedMs = realTimeElapsedMs * 24;
+       // Convert UNIX timestamp to Palia time
+       const date = new Date(nextMatchingTime * 1000);
+       const realTimeElapsedMs = (date.getHours() * 3600 + date.getMinutes() * 60 + date.getSeconds()) * 1000;
+       const paliaTimeElapsedMs = realTimeElapsedMs * 24;
 
-     const paliaHours = Math.floor(paliaTimeElapsedMs / 3600000) % 24;
-     const paliaMinutes = Math.floor((paliaTimeElapsedMs % 3600000) / 60000);
+       const paliaHours = Math.floor(paliaTimeElapsedMs / 3600000) % 24;
+       const paliaMinutes = Math.floor((paliaTimeElapsedMs % 3600000) / 60000);
 
-     const formattedHours = (paliaHours % 12 === 0 ? 12 : paliaHours % 12).toString().padStart(2, '0');
-     const formattedMinutes = paliaMinutes.toString().padStart(2, '0');
-     const ampm = paliaHours < 12 ? 'AM' : 'PM';
+       const formattedHours = (paliaHours % 12 === 0 ? 12 : paliaHours % 12).toString().padStart(2, '0');
+       const formattedMinutes = paliaMinutes.toString().padStart(2, '0');
+       const ampm = paliaHours < 12 ? 'AM' : 'PM';
 
-     setNextPaliaTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
-   } else {
-     setNextTimestamp(null);
-     setNextPaliaTime(null);
-   }
+       setNextPaliaTime(`${formattedHours}:${formattedMinutes} ${ampm}`);
+     } else {
+       setNextTimestamp(null);
+       setNextPaliaTime(null);
+     }
+   };
+   updateTimestamp();
+   const interval = setInterval(updateTimestamp, 5000);
+   return () => clearInterval(interval);
  }, [solution, modulus]);
 
  if (nextTimestamp === null) {
@@ -103,8 +108,8 @@ const PlatformStates = ({congruences, currentTimestamp, solutionInfo}) => {
     <div className="flex justify-center space-x-4 mt-4">
       {congruences.map((c, index) => {
         const isUp = c.b > 0 && (Math.floor(currentTimestamp / c.b) % 2 === 0);
-        const isUpAtStart = Math.floor(nextTimestamp / c.b) % 2 == 0;
-        const swap = isUpAtStart && c.downAtStart || !isUpAtStart && !c.downAtStart;
+        const upAtArrival = Math.floor((nextTimestamp + c.secondsIntoRun) / c.b) % 2 == 0;
+        const swap = upAtArrival && !c.directionUp || !upAtArrival && c.directionUp;
         const effectiveStatus = swap ? !isUp : isUp;
         return (
           <div key={index} className="text-center">
@@ -152,57 +157,6 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
  );
 };
 
-// Component to calculate the starting position for each platform being planned
-const PlatformStartCalculator = () => {
- const [secondsIntoRun, setSecondsIntoRun] = useState(0);
- const [platformCycle, setPlatformCycle] = useState(0);
- const [result, setResult] = useState(0);
-
- useEffect(() => {
-   if (platformCycle > 0) {
-     // Correct mathematical modulo for negative numbers
-     const remainder = ((-secondsIntoRun % platformCycle) + platformCycle) % platformCycle;
-     setResult(remainder);
-   } else {
-     setResult(0);
-   }
- }, [secondsIntoRun, platformCycle]);
-
- return (
-   <div className="mt-8">
-     <h2 className="text-xl font-semibold mb-4 text-blue-500">Starting Position Calculator</h2>
-     <div className="bg-gray-100 p-4 rounded-lg shadow-inner space-y-4">
-       <div className="flex items-center space-x-2">
-         <label htmlFor="cycleInput" className="text-lg">Platform Cycle:</label>
-         <input
-           id="cycleInput"
-           type="number"
-           value={platformCycle}
-           onChange={(e) => setPlatformCycle(parseInt(e.target.value) || 0)}
-           className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-         />
-       </div>
-       <div className="flex items-center space-x-2">
-         <label htmlFor="secondsInput" className="text-lg">Seconds Into Run:</label>
-         <input
-           id="secondsInput"
-           type="number"
-           value={secondsIntoRun}
-           onChange={(e) => setSecondsIntoRun(parseInt(e.target.value) || 0)}
-           className="w-full px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-         />
-       </div>
-       <div>
-         <h3 className="text-lg font-bold">Position at Start of Run:</h3>
-         <p className="font-mono text-gray-800">
-           {`${result}`}
-         </p>
-       </div>
-     </div>
-   </div>
- );
-};
-
 // Tab for setting up runs based on Platform Planner
 const RunSetupTab = ({ solutionInfo, congruences, currentTimestamp }) => (
  <div>
@@ -214,13 +168,13 @@ const RunSetupTab = ({ solutionInfo, congruences, currentTimestamp }) => (
 
 // Tab for Congruence Solver
 const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }) => {
+ const [showSolutionInfo, setShowSolutionInfo] = useState(false);
  return (
    <div>
      <h2 className="text-xl font-semibold mb-4 text-blue-500">Planned Platforms</h2>
-     <p>For each platform you want to plan, input its cycle (the time it takes to travel from one end to the other)
-      and the position in its cycle at the moment you start your run. Use "Platform Start Calculator" below to
-      calculate initial platform values. Solution will display an offset and interval that indicate when to start
-      the run, and how many seconds there are between valid start times.
+     <p>Not all combinations of platforms will have a solution. Keep in mind that you may need to round up
+      to the next second for some platforms. If you're having trouble finding valid solutions, try adding
+      one platform at a time and adjusting values until you have a valid solution for a subset of all paltforms.
      </p>
      <div className="space-y-4">
        {congruences.map((c, index) => {
@@ -237,7 +191,18 @@ const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }
                }}
                className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
              />
-             <span className="text-lg">Position at start time: </span>
+             <span className="text-lg">Seconds into run: </span>
+             <input
+               type="number"
+               value={c.secondsIntoRun}
+               onChange={(e) => {
+                 const newCongruences = [...congruences];
+                 newCongruences[index].secondsIntoRun = parseInt(e.target.value) || 0;
+                 setCongruences(newCongruences);
+               }}
+               className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+             />
+             <span className="text-lg">Position at arrival: </span>
              <input
                type="number"
                value={c.a}
@@ -249,17 +214,19 @@ const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }
                className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
              />
              <label className="flex items-center space-x-1">
-               <input
-                 type="checkbox"
-                 checked={c.downAtStart}
+               <span className="text-sm">Direction</span>
+               <select
+                 value={c.directionUp ? 'Up' : 'Down'}
                  onChange={(e) => {
                    const newCongruences = [...congruences];
-                   newCongruences[index].downAtStart = e.target.checked;
+                   newCongruences[index].directionUp = e.target.value === 'Up';
                    setCongruences(newCongruences);
                  }}
-                 className="form-checkbox"
-               />
-               <span className="text-sm">Down At Start: </span>
+                 className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+               >
+                 <option value="Up">Up</option>
+                 <option value="Down">Down</option>
+               </select>
              </label>
              <button
                onClick={() => {
@@ -276,21 +243,48 @@ const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }
          );
        })}
        <button
-         onClick={() => setCongruences([...congruences, { a: 0, b: 1, downAtStart: false }])}
+         onClick={() => setCongruences([...congruences, { a: 0, b: 1, secondsIntoRun: 0, directionUp: true }])}
          className="w-full py-2 px-4 rounded-md text-white bg-blue-500 hover:bg-blue-600 transition-colors duration-200 shadow-md"
        >
          Add Platform
        </button>
      </div>
 
-     <h2 className="text-xl font-semibold mt-8 mb-4 text-blue-500">Solution</h2>
+     <div className="flex items-center">
+       <h2 className="text-xl font-semibold mt-8 mb-4 text-blue-500">Solution</h2>
+       <button
+         type="button"
+         className="ml-2 text-blue-400 hover:text-blue-600 focus:outline-none"
+         onClick={() => setShowSolutionInfo(true)}
+         aria-label="What does Solution mean?"
+       >
+         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+           <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm2 8a1 1 0 11-2 0v-4a1 1 0 012 0v4z" clipRule="evenodd" />
+         </svg>
+       </button>
+     </div>
+     {showSolutionInfo && (
+       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
+           <button
+             className="absolute top-2 right-2 text-gray-400 hover:text-gray-700"
+             onClick={() => setShowSolutionInfo(false)}
+             aria-label="Close"
+           >
+             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+             </svg>
+           </button>
+           <h3 className="text-lg font-bold mb-2 text-blue-600">What do these values mean?</h3>
+           <p className="text-gray-700">The solution below displays two values needed to calculate valid start times. These values can be used to calculate valid timestamps where a run can start and reach the platforms at the desired times. Mathematically, if T=a UNIX timestamp in seconds, runs will start when (T + Start) mod Interval = 0.</p>
+         </div>
+       </div>
+     )}
      <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
        <pre className="text-lg font-mono whitespace-pre-wrap">
          {error || (solutionInfo ? `Start=${solutionInfo.value}s Interval=${solutionInfo.modulus}s` : 'Enter platforms to calculate start time and run interval.')}
        </pre>
-     </div>
-    
-     <PlatformStartCalculator />
+     </div>    
    </div>
  );
 };
@@ -299,10 +293,10 @@ const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }
 const App = () => {
  const [activeTab, setActiveTab] = useState('palia');
  const [congruences, setCongruences] = useState([
-   { a: 5, b: 8, downAtStart: true },
-   { a: 2, b: 7, downAtStart: false },
-   { a: 1, b: 6, downAtStart: false },
-   { a: 7, b: 10, downAtStart: false },
+   { a: 0, b: 8, secondsIntoRun: 115, directionUp: true },
+   { a: 0, b: 7, secondsIntoRun: 110, directionUp: true },
+   { a: 0, b: 6, secondsIntoRun: 107, directionUp: true },
+   { a: 0, b: 10, secondsIntoRun: 33, directionUp: true },
  ]);
 
  const [solutionInfo, setSolutionInfo] = useState(null);
@@ -312,7 +306,7 @@ const App = () => {
  useEffect(() => {
    const interval = setInterval(() => {
      setCurrentTimestamp(Math.floor(Date.now() / 1000));
-   }, 1000);
+   }, 1000 / 5);
    return () => clearInterval(interval);
  }, []);
 
@@ -326,6 +320,9 @@ const App = () => {
 
    let currentA = congruences[0].a;
    let currentB = congruences[0].b;
+
+   // Correct currentA to actual start time
+   currentA = (((currentA - congruences[0].secondsIntoRun) % currentB) + currentB) % currentB;
   
    // Check initial condition: a must be less than b
    if (currentA >= currentB) {
@@ -336,7 +333,7 @@ const App = () => {
    for (let i = 1; i < congruences.length; i++) {
      const { a, b } = congruences[i];
      const g = gcd(currentB, b);
-     const newA = a;
+     const newA = (((a - congruences[i].secondsIntoRun) % b) + b) % b;
      const newB = b;
 
      // Check for consistency (solvability)
