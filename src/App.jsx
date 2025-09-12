@@ -130,11 +130,8 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
 
  useEffect(() => {
    const updateTime = () => {
-     const magicOffset = 2; // Offset to sync with Palia time. IDK why
-     const now = Math.floor(new Date().getTime() / 1000) + magicOffset;
-    
-     const paliaHours = Math.floor(now % 3600 / 150);
-     const paliaMinutes = Math.floor(now / 2.5) % 60;
+     const paliaHours = Math.floor(currentTimestamp % 3600 / 150);
+     const paliaMinutes = Math.floor(currentTimestamp / 2.5) % 60;
     
      const formattedHours = (paliaHours % 12 === 0 ? 12 : paliaHours % 12).toString().padStart(2, '0');
      const formattedMinutes = paliaMinutes.toString().padStart(2, '0');
@@ -146,7 +143,7 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
    updateTime();
    const interval = setInterval(updateTime, 1000 / 30); // Update 30 times per second
    return () => clearInterval(interval);
- }, []);
+ }, [currentTimestamp]);
 
  return (
    <div className="text-center mb-6">
@@ -306,8 +303,9 @@ const App = () => {
 
  useEffect(() => {
    const interval = setInterval(() => {
-     setCurrentTimestamp(Math.floor(Date.now() / 1000));
-   }, 1000 / 5);
+     const magicOffset = 2; // Offset to sync with Palia time. IDK why
+     setCurrentTimestamp(Math.floor(Date.now() / 1000) + magicOffset);
+   }, 30);
    return () => clearInterval(interval);
  }, []);
 
