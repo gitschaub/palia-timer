@@ -130,7 +130,8 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
 
  useEffect(() => {
    const updateTime = () => {
-     const now = Math.floor(new Date().getTime() / 1000);
+     const magicOffset = 2; // Offset to sync with Palia time. IDK why
+     const now = Math.floor(new Date().getTime() / 1000) + magicOffset;
     
      const paliaHours = Math.floor(now % 3600 / 150);
      const paliaMinutes = Math.floor(now / 2.5) % 60;
