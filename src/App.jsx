@@ -87,17 +87,22 @@ const PlatformStates = ({congruences, currentTimestamp, solutionInfo}) => {
   const [nextTimestamp, setNextTimestamp] = useState(null);
 
   useEffect(() => {
-    const solution = solutionInfo.value;
-    const modulus = solutionInfo.modulus;
-    if (solution !== null && modulus !== null) {
-     const nowInSeconds = Math.floor(Date.now() / 1000);
-     const remainder = nowInSeconds % modulus;
-     let timeToAdd = (solution - remainder + modulus) % modulus;
-     const nextMatchingTime = nowInSeconds + timeToAdd;  
-     setNextTimestamp(nextMatchingTime);
-    } else {
-      nextTimestamp(null);
-    }
+    const updateNextTimestamp = (solutionInfo) => {
+      const solution = solutionInfo.value;
+      const modulus = solutionInfo.modulus;
+      if (solution !== null && modulus !== null) {
+      const nowInSeconds = Math.floor(Date.now() / 1000);
+      const remainder = nowInSeconds % modulus;
+      let timeToAdd = (solution - remainder + modulus) % modulus;
+      const nextMatchingTime = nowInSeconds + timeToAdd;  
+      setNextTimestamp(nextMatchingTime);
+      } else {
+        nextTimestamp(null);
+      }
+    };
+    updateNextTimestamp(solutionInfo);
+    const interval = setInterval(() => updateNextTimestamp(solutionInfo), 5000);
+    return () => clearInterval(interval);
   }, [solutionInfo]);
 
   if (solutionInfo == null) {
