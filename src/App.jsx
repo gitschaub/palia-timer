@@ -68,7 +68,7 @@ const TimestampCalculator = ({ solution, modulus }) => {
 
  return (
    <div className="mt-8">
-     <h2 className="text-xl font-semibold mb-4 text-teal-500">Next Run</h2>
+     <h2 className="text-xl font-semibold mb-4 text-blue-500">Next Run</h2>
      <div className="bg-gray-100 p-4 rounded-lg shadow-inner space-y-2">
        <div>
          <h3 className="text-lg font-bold">UNIX Timestamp:</h3>
@@ -148,7 +148,7 @@ const PaliaClock = ({ congruences, currentTimestamp }) => {
  return (
    <div className="text-center mb-6">
      <h2 className="text-2xl font-bold text-gray-700">Current Palia Time</h2>
-     <p className="text-4xl font-mono text-teal-600">
+     <p className="text-4xl font-mono text-blue-600">
        {paliaTime}
      </p>
    </div>
@@ -166,133 +166,175 @@ const RunSetupTab = ({ solutionInfo, congruences, currentTimestamp }) => (
 
 // Tab for Congruence Solver
 const PlatformPlannerTab = ({ congruences, setCongruences, solutionInfo, error }) => {
- const [showSolutionInfo, setShowSolutionInfo] = useState(false);
- return (
-   <div>
-     <h2 className="text-xl font-semibold mb-4 text-teal-500">Planned Platforms</h2>
-     <p>Not all combinations of platforms will have a solution. Keep in mind that you may need to round up
-      to the next second for some platforms. If you're having trouble finding valid solutions, try adding
-      one platform at a time and adjusting values until you have a valid solution for a subset of all paltforms.
-     </p>
-     <div className="space-y-4">
-       {congruences.map((c, index) => {
-         return (
-           <div key={index} className="flex items-center space-x-2">
-             <label className="flex items-center space-x-1">
-               <span className="text-sm">Platform cycle:</span>
-               <input
-                 type="number"
-                 value={c.b}
-                 onChange={(e) => {
-                   const newCongruences = [...congruences];
-                   newCongruences[index].b = parseInt(e.target.value) || 0;
-                   setCongruences(newCongruences);
-                 }}
-                 className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-               />
-             </label>
-             <label className="flex items-center space-x-1">
-               <span className="text-sm">Seconds into run:</span>
-               <input
-                 type="number"
-                 value={c.secondsIntoRun}
-                 onChange={(e) => {
-                   const newCongruences = [...congruences];
-                   newCongruences[index].secondsIntoRun = parseInt(e.target.value) || 0;
-                   setCongruences(newCongruences);
-                 }}
-                 className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-               />
-             </label>
-             <label className="flex items-center space-x-1">
-               <span className="text-sm">Position at arrival:</span>
-               <input
-                 type="number"
-                 value={c.a}
-                 onChange={(e) => {
-                   const newCongruences = [...congruences];
-                   newCongruences[index].a = parseInt(e.target.value) || 1;
-                   setCongruences(newCongruences);
-                 }}
-                 className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-               />
-             </label>
-             <label className="flex items-center space-x-1">
-               <span className="text-sm">Direction</span>
-               <select
-                 value={c.directionUp ? 'Up' : 'Down'}
-                 onChange={(e) => {
-                   const newCongruences = [...congruences];
-                   newCongruences[index].directionUp = e.target.value === 'Up';
-                   setCongruences(newCongruences);
-                 }}
-                 className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-               >
-                 <option value="Up">Up</option>
-                 <option value="Down">Down</option>
-               </select>
-             </label>
-             <button
-               onClick={() => {
-                 const newCongruences = congruences.filter((_, i) => i !== index);
-                 setCongruences(newCongruences);
-               }}
-               className="p-1 text-red-500 hover:text-red-700"
-               aria-label="Delete platform"
-             >
-               {/* Trash can icon */}
-               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-                 <path d="M6 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm3 1a1 1 0 00-1 1v6a1 1 0 102 0v-6a1 1 0 00-1-1zm4-5a1 1 0 00-1-1H8a1 1 0 00-1 1v1H3a1 1 0 100 2h1v10a2 2 0 002 2h8a2 2 0 002-2V6h1a1 1 0 100-2h-3V4zm-2 1V4H8v1h4z" />
-               </svg>
-             </button>
-           </div>
-         );
-       })}
-       <button
-         onClick={() => setCongruences([...congruences, { a: 0, b: 1, secondsIntoRun: 0, directionUp: true }])}
-         className="w-full py-2 px-4 rounded-md text-white bg-teal-600 hover:bg-teal-500 transition-colors duration-200 shadow-md font-semibold mb-2"
-       >
-         Add Platform
-       </button>
-     </div>
+  const [showInfoPopup, setShowInfoPopup] = useState(false);
+  const [showSolutionInfo, setShowSolutionInfo] = useState(false);
 
-     <div className="flex items-center">
-       <h2 className="text-xl font-semibold mt-8 mb-4 text-teal-500">Solution</h2>
-       <button
-         type="button"
-         className="ml-2 text-teal-400 hover:text-teal-600 focus:outline-none"
-         onClick={() => setShowSolutionInfo(true)}
-         aria-label="What does Solution mean?"
-       >
-         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-           <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm2 8a1 1 0 11-2 0v-4a1 1 0 012 0v4z" clipRule="evenodd" />
-         </svg>
-       </button>
-     </div>
-     {showSolutionInfo && (
-       <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
-         <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
-           <button
-             className="absolute top-2 right-2 text-teal-400 hover:text-teal-600"
-             onClick={() => setShowSolutionInfo(false)}
-             aria-label="Close"
-           >
-             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
-               <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-             </svg>
-           </button>
-           <h3 className="text-lg font-bold mb-2 text-teal-600">What do these values mean?</h3>
-           <p className="text-gray-700">The solution below displays two values needed to calculate valid start times. These values can be used to calculate valid timestamps where a run can start and reach the platforms at the desired times. Mathematically, if T=a UNIX timestamp in seconds, runs will start when (T + Start) mod Interval = 0.</p>
-         </div>
-       </div>
-     )}
-     <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
-       <pre className="text-lg font-mono whitespace-pre-wrap">
-         {error || (solutionInfo ? `Start=${solutionInfo.value}s Interval=${solutionInfo.modulus}s` : 'Enter platforms to calculate start time and run interval.')}
-       </pre>
-     </div>    
-   </div>
- );
+  return (
+    <div>
+      <div className="flex items-center mb-4">
+        <h2 className="text-xl font-semibold text-blue-500">Platforms</h2>
+        <button
+          type="button"
+          className="ml-2 text-blue-400 hover:text-blue-600 focus:outline-none"
+          onClick={() => setShowInfoPopup(true)}
+          aria-label="Platform Planner Info"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm2 8a1 1 0 11-2 0v-4a1 1 0 012 0v4z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      {showInfoPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
+            <button
+              className="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
+              onClick={() => setShowInfoPopup(false)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <h3 className="text-lg font-bold mb-2 text-blue-600">Platform Planner Info</h3>
+            <div className="space-y-3 text-gray-700">
+              <p>
+                Add each platform you want to plan in your run below. If the cycle is possible a solution will be displayed in the next section.
+                You can plan for the rotating arm cycle at the start of the run by inputting a 10s "platform".
+              </p>
+              <p>
+                Not all combinations of platforms will have a solution. Keep in mind that you may need to round up
+                to the next second for some platforms. If you're having trouble finding valid solutions, try adding
+                one platform at a time and adjusting values until you have a valid solution for a subset of all platforms.
+              </p>
+              <p>
+                NOTE: the direction of platforms is not guaranteed. The Run Setup tab will display the direction that platforms need
+                to be moving in order to line up the run. You can use this to setup platforms in the appropriate direction before your run
+                (video tutorial coming soon). Desyncs will also invert these directions and disrupt the planned cycles.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="space-y-4">
+        {congruences.map((c, index) => {
+          return (
+            <div key={index} className="flex items-center space-x-2">
+              <label className="flex items-center space-x-1">
+                <span className="text-sm">Platform cycle:</span>
+                <input
+                  type="number"
+                  value={c.b}
+                  onChange={(e) => {
+                    const newCongruences = [...congruences];
+                    newCongruences[index].b = parseInt(e.target.value) || 0;
+                    setCongruences(newCongruences);
+                  }}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="flex items-center space-x-1">
+                <span className="text-sm">Seconds into run:</span>
+                <input
+                  type="number"
+                  value={c.secondsIntoRun}
+                  onChange={(e) => {
+                    const newCongruences = [...congruences];
+                    newCongruences[index].secondsIntoRun = parseInt(e.target.value) || 0;
+                    setCongruences(newCongruences);
+                  }}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="flex items-center space-x-1">
+                <span className="text-sm">Position at arrival:</span>
+                <input
+                  type="number"
+                  value={c.a}
+                  onChange={(e) => {
+                    const newCongruences = [...congruences];
+                    newCongruences[index].a = parseInt(e.target.value) || 1;
+                    setCongruences(newCongruences);
+                  }}
+                  className="w-16 px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </label>
+              <label className="flex items-center space-x-1">
+                <span className="text-sm">Direction</span>
+                <select
+                  value={c.directionUp ? 'Up' : 'Down'}
+                  onChange={(e) => {
+                    const newCongruences = [...congruences];
+                    newCongruences[index].directionUp = e.target.value === 'Up';
+                    setCongruences(newCongruences);
+                  }}
+                  className="px-2 py-1 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="Up">Up</option>
+                  <option value="Down">Down</option>
+                </select>
+              </label>
+              <button
+                onClick={() => {
+                  const newCongruences = congruences.filter((_, i) => i !== index);
+                  setCongruences(newCongruences);
+                }}
+                className="p-1 text-red-500 hover:text-red-700"
+                aria-label="Delete platform"
+              >
+                {/* Trash can icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M6 8a1 1 0 011 1v6a1 1 0 11-2 0V9a1 1 0 011-1zm3 1a1 1 0 00-1 1v6a1 1 0 102 0v-6a1 1 0 00-1-1zm4-5a1 1 0 00-1-1H8a1 1 0 00-1 1v1H3a1 1 0 100 2h1v10a2 2 0 002 2h8a2 2 0 002-2V6h1a1 1 0 100-2h-3V4zm-2 1V4H8v1h4z" />
+                </svg>
+              </button>
+            </div>
+          );
+        })}
+        <button
+          onClick={() => setCongruences([...congruences, { a: 0, b: 1, secondsIntoRun: 0, directionUp: true }])}
+          className="w-full py-2 px-4 rounded-md text-white bg-blue-600 hover:bg-blue-500 transition-colors duration-200 shadow-md font-semibold mb-2"
+        >
+          Add Platform
+        </button>
+      </div>
+
+      <div className="flex items-center">
+        <h2 className="text-xl font-semibold mt-8 mb-4 text-blue-500">Solution</h2>
+        <button
+          type="button"
+          className="ml-2 text-blue-400 hover:text-blue-600 focus:outline-none"
+          onClick={() => setShowSolutionInfo(true)}
+          aria-label="What does Solution mean?"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+            <path fillRule="evenodd" d="M18 10A8 8 0 11 2 10a8 8 0 0116 0zm-8-4a1 1 0 100 2 1 1 0 000-2zm2 8a1 1 0 11-2 0v-4a1 1 0 012 0v4z" clipRule="evenodd" />
+          </svg>
+        </button>
+      </div>
+      {showSolutionInfo && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-30">
+          <div className="bg-white rounded-lg shadow-lg p-6 max-w-md w-full relative">
+            <button
+              className="absolute top-2 right-2 text-blue-400 hover:text-blue-600"
+              onClick={() => setShowSolutionInfo(false)}
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <h3 className="text-lg font-bold mb-2 text-blue-600">What do these values mean?</h3>
+            <p className="text-gray-700">The solution below displays two values needed to calculate valid start times. These values can be used to calculate valid timestamps where a run can start and reach the platforms at the desired times. Mathematically, if T=a UNIX timestamp in seconds, runs will start when (T + Start) mod Interval = 0.</p>
+          </div>
+        </div>
+      )}
+      <div className="bg-gray-100 p-4 rounded-lg shadow-inner">
+        <pre className="text-lg font-mono whitespace-pre-wrap">
+          {error || (solutionInfo ? `Start=${solutionInfo.value}s Interval=${solutionInfo.modulus}s` : 'Enter platforms to calculate start time and run interval.')}
+        </pre>
+      </div>    
+    </div>
+  );
 };
 
 // Main App Component
@@ -380,7 +422,7 @@ const App = () => {
  return (
    <div className="bg-gray-50 flex items-center justify-center min-h-screen p-4 font-sans text-gray-800">
      <div className="bg-white rounded-2xl shadow-xl p-8 max-w-4xl w-full">
-       <h1 className="text-3xl font-bold text-center text-teal-600 mb-6">
+       <h1 className="text-3xl font-bold text-center text-blue-600 mb-6">
          Tower Run Planner
        </h1>
        {/* Tab Navigation */}
@@ -388,7 +430,7 @@ const App = () => {
          <button
            onClick={() => setActiveTab('palia')}
            className={`py-2 px-6 font-semibold transition-colors duration-200 ${
-             activeTab === 'palia' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'
+             activeTab === 'palia' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
            }`}
          >
            Run Setup
@@ -396,7 +438,7 @@ const App = () => {
          <button
            onClick={() => setActiveTab('solver')}
            className={`py-2 px-6 font-semibold transition-colors duration-200 ${
-             activeTab === 'solver' ? 'text-teal-600 border-b-2 border-teal-600' : 'text-gray-500 hover:text-gray-700'
+             activeTab === 'solver' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500 hover:text-gray-700'
            }`}
          >
            Platform Planner
